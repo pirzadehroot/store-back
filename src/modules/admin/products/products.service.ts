@@ -12,23 +12,33 @@ export class ProductsService {
     private readonly product_repository: Repository<productEntity>,
   ) {}
 
-  create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+  async createProduct(createProductDto: CreateProductDto) {
+    const existingProduct = await this.product_repository.findOneBy({
+      slug: createProductDto.slug,
+    });
+
+    if (existingProduct) {
+      throw new Error('محصول دیگری با این اسلاگ وجود دارد.');
+    }
+
+    const newProduct = this.product_repository.create(createProductDto);
+    return await this.product_repository.save(newProduct);
   }
 
-  async findAll() {
+  async findAllProducts() {
     return await this.product_repository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOneProduct(id: string) {
+    return await this.product_repository.findOneBy({ id });
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async updateProduct(id: string, updateProductDto: UpdateProductDto) {
+    await this.product_repository.update(id, updateProductDto);
+    return this.product_repository.findOneBy({ id });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async removeProduct(id: string) {
+    await this.product_repository.update(id, { isDeleted: true });
   }
 }
