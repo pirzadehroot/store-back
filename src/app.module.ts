@@ -1,13 +1,13 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { LoggerMiddleware } from './middleware/logger/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './modules/admin/users/users.module';
+import { CategoriesModule } from './modules/admin/categories/categories.module';
 import { ProductsModule } from './modules/admin/products/products.module';
-import { productEntity } from './entities/products.entity';
+import { productsEntity } from './entities/products.entity';
 import { ShopModule } from './modules/shop/shop.module';
 import usersEntity from './entities/users.entity';
+import { categoriesEntity } from './entities/categories.entity';
 
 @Module({
   imports: [
@@ -21,13 +21,12 @@ import usersEntity from './entities/users.entity';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([productEntity, usersEntity]),
+    TypeOrmModule.forFeature([productsEntity, usersEntity, categoriesEntity]),
     UsersModule,
+    CategoriesModule,
     ProductsModule,
     ShopModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

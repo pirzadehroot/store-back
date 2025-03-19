@@ -7,10 +7,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { categoriesEntity } from './categories.entity';
 
-@Entity('products')
-export class productsEntity {
+@Entity('categories')
+export class categoriesEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -20,16 +19,10 @@ export class productsEntity {
   @Column({ unique: true, nullable: false })
   slug: string;
 
-  @Column({ nullable: false })
-  price: number;
-
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   description: string;
 
-  @Column('jsonb', { nullable: false })
-  features: { label: string; value: string }[];
-
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   imageUrl: string;
 
   @Column({ default: false })
@@ -50,5 +43,5 @@ export class productsEntity {
 
   @ManyToOne(() => categoriesEntity)
   @JoinColumn({ name: 'id' })
-  category: categoriesEntity;
+  childrenCategory: categoriesEntity;
 }
