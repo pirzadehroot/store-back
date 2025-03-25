@@ -7,10 +7,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { categoriesEntity } from './categories.entity';
+import { CategoryEntity } from './categories.entity';
 
 @Entity('products')
-export class productsEntity {
+export class ProductEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -20,13 +20,13 @@ export class productsEntity {
   @Column({ unique: true, nullable: false })
   slug: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, type: 'text' })
   description: string;
 
-  @Column('jsonb', { nullable: false })
+  @Column('jsonb', { nullable: true })
   features: { label: string; value: string }[];
 
   @Column({ nullable: false })
@@ -35,20 +35,16 @@ export class productsEntity {
   @Column({ default: false })
   isDeleted: boolean;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-  })
+  @CreateDateColumn()
   created_at: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-    onUpdate: 'CURRENT_TIMESTAMP(6)',
-  })
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => categoriesEntity)
-  @JoinColumn({ name: 'id' })
-  category: categoriesEntity;
+  @ManyToOne(() => CategoryEntity, (category) => category.products, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category: CategoryEntity;
 }

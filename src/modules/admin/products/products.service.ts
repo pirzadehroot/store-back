@@ -1,28 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { productsEntity } from '../../../entities/products.entity';
 import { Repository } from 'typeorm';
+import { ProductEntity } from '../../../entities/products.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
-    @InjectRepository(productsEntity)
-    private readonly product_repository: Repository<productsEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly product_repository: Repository<ProductEntity>,
   ) {}
 
   async createProduct(createProductDto: CreateProductDto) {
-    const existingProduct = await this.product_repository.findOneBy({
-      slug: createProductDto.slug,
+    const { slug, categoryId } = createProductDto;
+
+    const existingProduct = await this.product_repository.findOne({
+      where: { slug },
+      relations: categoryId ? ['category'] : [],
     });
 
     if (existingProduct) {
-      throw new Error('محصول دیگری با این اسلاگ وجود دارد.');
+      throw new BadRequestException('محصول دیگری با این اسلاگ وجود دارد.');
     }
 
-    const newProduct = this.product_repository.create(createProductDto);
-    return await this.product_repository.save(newProduct);
+    if (categoryId) {
+      const newCategory = await this.product_repository.findOneBy({
+        id: categoryId,
+      });
+      if (!category) {
+        throw new BadRequestException('دسته‌بندی موردنظر یافت نشد.');
+      }
+    }
+
+    const newProduct = this.product_repository.create({
+      ...createProductDto,
+      category: newCategory,
+    });
+
+    return this.product_repository.save(newProduct);
   }
 
   async findAllProducts() {

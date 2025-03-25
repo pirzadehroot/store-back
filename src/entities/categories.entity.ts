@@ -4,12 +4,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ProductEntity } from './products.entity';
 
 @Entity('categories')
-export class categoriesEntity {
+export class CategoryEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -19,29 +21,23 @@ export class categoriesEntity {
   @Column({ unique: true, nullable: false })
   slug: string;
 
-  @Column({ nullable: true })
-  description: string;
-
-  @Column({ nullable: true })
-  imageUrl: string;
-
   @Column({ default: false })
   isDeleted: boolean;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-  })
+  @CreateDateColumn()
   created_at: Date;
 
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP(6)',
-    onUpdate: 'CURRENT_TIMESTAMP(6)',
-  })
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => categoriesEntity)
-  @JoinColumn({ name: 'id' })
-  childrenCategory: categoriesEntity;
+  @ManyToOne(() => CategoryEntity, (category) => category.id, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'parentCategoryId' })
+  parentCategory: CategoryEntity;
+
+  @OneToMany(() => ProductEntity, (product) => product.category, {
+    cascade: true,
+  })
+  products: ProductEntity[];
 }

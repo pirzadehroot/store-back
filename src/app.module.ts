@@ -1,13 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerMiddleware } from './middleware/logger/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './modules/admin/users/users.module';
 import { CategoriesModule } from './modules/admin/categories/categories.module';
 import { ProductsModule } from './modules/admin/products/products.module';
-import { productsEntity } from './entities/products.entity';
 import { ShopModule } from './modules/shop/shop.module';
-import usersEntity from './entities/users.entity';
-import { categoriesEntity } from './entities/categories.entity';
+import { ProductEntity } from './entities/products.entity';
+import { CategoryEntity } from './entities/categories.entity';
 
 @Module({
   imports: [
@@ -21,8 +19,7 @@ import { categoriesEntity } from './entities/categories.entity';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([productsEntity, usersEntity, categoriesEntity]),
-    UsersModule,
+    TypeOrmModule.forFeature([ProductEntity,  CategoryEntity]),
     CategoriesModule,
     ProductsModule,
     ShopModule,

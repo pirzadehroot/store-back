@@ -1,22 +1,14 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CreateCategoryDto {
-  readonly id: string;
-
-  @IsNotEmpty({ message: 'نام محصول نمی‌تواند خالی باشد.' })
+  @IsNotEmpty({ message: 'نام دسته بندی نمی‌تواند خالی باشد.' })
+  @IsString({ message: 'نام دسته بندی باید متن باشد.' })
   readonly title: string;
 
-  @IsNotEmpty({ message: 'اسلاگ محصول نمی‌تواند خالی باشد.' })
+  @IsNotEmpty({ message: 'اسلاگ دسته بندی نمی‌تواند خالی باشد.' })
+  @IsString({ message: 'اسلاگ باید متن باشد.' })
   readonly slug: string;
 
-  @IsNumber({}, { message: 'قیمت محصول باید یک عدد باشد.' })
-  readonly price: number;
-
-  @IsString({ message: 'توضیحات محصول باید یک رشته باشد.' })
-  readonly description: string;
-
-  @IsString({ message: 'عکس محصول انتخاب نشده است..' })
-  readonly imageUrl: string;
-
-  readonly isDeleted: boolean = false;
+  @IsOptional()
+  readonly parentCategoryId?: string;
 }

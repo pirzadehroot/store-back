@@ -38,5 +38,8 @@ export class CreateProductDto {
   @IsString({ message: 'عکس محصول انتخاب نشده است..' })
   readonly imageUrl: string;
 
+  @IsNotEmpty({ message: 'دسته بندی محصول باید انتخاب شود.' })
+  readonly categoryId: string;
+
   readonly isDeleted: boolean = false;
 }
