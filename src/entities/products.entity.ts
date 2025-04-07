@@ -33,6 +33,9 @@ export class ProductEntity {
   imageUrl: string;
 
   @Column({ default: false })
+  isShowing: boolean;
+
+  @Column({ default: false })
   isDeleted: boolean;
 
   @CreateDateColumn()

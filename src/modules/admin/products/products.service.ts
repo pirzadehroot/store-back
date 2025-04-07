@@ -24,18 +24,11 @@ export class ProductsService {
       throw new BadRequestException('محصول دیگری با این اسلاگ وجود دارد.');
     }
 
-    if (categoryId) {
-      const newCategory = await this.product_repository.findOneBy({
-        id: categoryId,
-      });
-      if (!category) {
-        throw new BadRequestException('دسته‌بندی موردنظر یافت نشد.');
-      }
-    }
-
     const newProduct = this.product_repository.create({
       ...createProductDto,
-      category: newCategory,
+      category: await this.product_repository.findOneByOrFail({
+        id: categoryId,
+      }),
     });
 
     return this.product_repository.save(newProduct);

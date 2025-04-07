@@ -19,7 +19,7 @@ import { CategoryEntity } from './entities/categories.entity';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([ProductEntity,  CategoryEntity]),
+    TypeOrmModule.forFeature([ProductEntity, CategoryEntity]),
     CategoriesModule,
     ProductsModule,
     ShopModule,
