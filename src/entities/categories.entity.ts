@@ -2,17 +2,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Tree,
-  TreeChildren,
-  TreeParent,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   OneToMany,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { ProductEntity } from './products.entity';
 
 @Entity('categories')
-@Tree('nested-set')
 export class CategoryEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -35,10 +33,13 @@ export class CategoryEntity {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @TreeChildren()
+  @OneToMany(() => CategoryEntity, (category) => category.parentCategory)
   subcategories: CategoryEntity[];
 
-  @TreeParent({ onDelete: 'SET NULL' })
+  @ManyToOne(() => CategoryEntity, (category) => category.subcategories, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parentCategoryId' })
   parentCategory: CategoryEntity | null;
 
   @OneToMany(() => ProductEntity, (product) => product.category)

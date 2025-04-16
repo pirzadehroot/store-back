@@ -4,17 +4,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CategoryEntity } from '../../../entities/categories.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { randomInt } from 'crypto';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(CategoryEntity)
-    private readonly categoryRepository: TreeRepository<CategoryEntity>,
+    private readonly categoryRepository: Repository<CategoryEntity>,
   ) {}
 
   async createCategory(createCategoryDto: CreateCategoryDto) {
@@ -22,106 +21,106 @@ export class CategoriesService {
       slug: createCategoryDto.slug,
     });
 
-    if (existingCategory)
+    if (existingCategory) {
       throw new BadRequestException('دسته بندی دیگری با این اسلاگ وجود دارد.');
+    }
 
     const newCategory = this.categoryRepository.create(createCategoryDto);
+
     if (createCategoryDto.parentCategoryId) {
-      newCategory.parentCategory = await this.categoryRepository.findOneBy({
+      const parentCategory = await this.categoryRepository.findOneBy({
         id: createCategoryDto.parentCategoryId,
+        isDeleted: false,
       });
-      if (!newCategory.parentCategory)
-        throw new NotFoundException('دسته بندی والد یافت نشد.');
+
+      if (!parentCategory) {
+        newCategory.parentCategory = null;
+      } else {
+        newCategory.parentCategory = parentCategory;
+      }
     }
 
     return await this.categoryRepository.save(newCategory);
   }
 
-  async findAllCategory() {
-    return await this.categoryRepository.findTrees();
+  async getCategoryWithChildren(
+    category: CategoryEntity,
+  ): Promise<CategoryEntity> {
+    const children = await this.categoryRepository.find({
+      where: {
+        parentCategory: { id: category.id },
+        isDeleted: false,
+      },
+      relations: ['parentCategory'],
+    });
+
+    category.subcategories = await Promise.all(
+      children.map((child) => this.getCategoryWithChildren(child)),
+    );
+
+    return category;
+  }
+
+  async findAllCategoryRecursive(): Promise<CategoryEntity[]> {
+    const rootCategories = await this.categoryRepository.find({
+      where: {
+        isDeleted: false,
+        parentCategory: [],
+      },
+      relations: ['parentCategory'],
+    });
+
+    return await Promise.all(
+      rootCategories.map((cat) => this.getCategoryWithChildren(cat)),
+    );
   }
 
   async findOneCategory(id: string) {
     const category = await this.categoryRepository.findOne({
-      where: { id, isDeleted: false },
-      relations: ['parentCategory', 'products'],
+      where: {
+        id: id,
+        isDeleted: false,
+      },
     });
-
     if (!category) throw new NotFoundException('دسته بندی یافت نشد.');
 
-    const subcategoriesTree =
-      await this.categoryRepository.findDescendantsTree(category);
-    return {
-      ...category,
-      subcategories: subcategoriesTree.subcategories,
-    };
+    return category;
   }
 
   async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto) {
+    console.log('hello--------------------------');
     const category = await this.categoryRepository.findOneBy({ id });
-    if (!category) {
-      throw new NotFoundException('دسته بندی یافت نشد.');
+    if (!category) throw new NotFoundException('دسته بندی یافت نشد.');
+
+    const existingCategoryWithSlug = await this.categoryRepository.findOneBy({
+      slug: updateCategoryDto.slug,
+    });
+
+    if (existingCategoryWithSlug && existingCategoryWithSlug.id !== id) {
+      throw new BadRequestException('دسته بندی دیگری با این اسلاگ وجود دارد.');
     }
 
-    if (updateCategoryDto.slug && updateCategoryDto.slug !== category.slug) {
-      const existingCategory = await this.categoryRepository.findOneBy({
-        slug: updateCategoryDto.slug,
-      });
-      if (existingCategory)
-        throw new BadRequestException(
-          'دسته بندی دیگری با این اسلاگ وجود دارد.',
-        );
-    }
+    const updateData = {
+      ...updateCategoryDto,
+      parentCategory: updateCategoryDto.parentCategoryId
+        ? await this.categoryRepository.findOneBy({
+            id: updateCategoryDto.parentCategoryId,
+          })
+        : null,
+    };
 
-    if (updateCategoryDto.parentCategoryId) {
-      const newParent = await this.categoryRepository.findOneBy({
-        id: updateCategoryDto.parentCategoryId,
-      });
-      if (!newParent) {
-        throw new NotFoundException('دسته بندی والد جدید یافت نشد.');
-      }
-      category.parentCategory = newParent;
-    } else if (updateCategoryDto.parentCategoryId === null) {
-      category.parentCategory = null;
-    }
-
-    Object.assign(category, updateCategoryDto);
-
-    return await this.categoryRepository.save(category);
+    await this.categoryRepository.update(id, updateData);
+    return this.categoryRepository.findOneBy({ id });
   }
 
-  async removeCategory(id: string) {
-    const category = await this.categoryRepository.findOneBy({ id });
-    if (!category) {
-      throw new NotFoundException('دسته بندی یافت نشد.');
-    }
-
-    const descendants = await this.categoryRepository.findDescendants(category);
-
-    for (const descendant of descendants) {
-      await this.categoryRepository.update(descendant.id, {
-        isDeleted: true,
-        isShowing: false,
-        slug: `${descendant.slug}-${randomInt(1000000000, 9999999999)}`,
-      });
-    }
-
+  async isShowing(id: string) {
+    const findCategory = await this.categoryRepository.findOneBy({ id });
     await this.categoryRepository.update(id, {
-      isDeleted: true,
-      isShowing: false,
-      slug: `${category.slug}-${randomInt(1000000000, 9999999999)}`,
+      isShowing: !findCategory?.isShowing,
     });
   }
 
-  async findRootCategories() {
-    return await this.categoryRepository.findRoots();
-  }
-
-  async getCategoryTree(id: string) {
-    const category = await this.categoryRepository.findOneBy({ id });
-    if (!category) {
-      throw new NotFoundException('دسته بندی یافت نشد.');
-    }
-    return await this.categoryRepository.findDescendantsTree(category);
+  async removeCategory(id: string) {
+    await this.categoryRepository.update(id, { isDeleted: true });
   }
 }

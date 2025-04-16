@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -22,12 +23,7 @@ export class CategoriesController {
 
   @Get()
   async findAll() {
-    return await this.categoriesService.findAllCategory();
-  }
-
-  @Get('roots')
-  async getRootCategories() {
-    return this.categoriesService.findRootCategories();
+    return await this.categoriesService.findAllCategoryRecursive();
   }
 
   @Get(':id')
@@ -41,6 +37,11 @@ export class CategoriesController {
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
     return this.categoriesService.updateCategory(id, updateCategoryDto);
+  }
+
+  @Patch('setMode/:id')
+  setMode(@Param('id') id: string) {
+    return this.categoriesService.isShowing(id);
   }
 
   @Delete(':id')
