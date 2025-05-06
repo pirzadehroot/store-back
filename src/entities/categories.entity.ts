@@ -21,6 +21,9 @@ export class CategoryEntity {
   @Column({ unique: true, nullable: false })
   slug: string;
 
+  @Column({ nullable: true })
+  imageUrl: string;
+
   @Column({ default: false })
   isShowing: boolean;
 

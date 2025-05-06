@@ -88,20 +88,12 @@ export class CategoriesService {
   }
 
   async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto) {
-    console.log('hello--------------------------');
-    const category = await this.categoryRepository.findOneBy({ id });
-    if (!category) throw new NotFoundException('دسته بندی یافت نشد.');
+    const existCategory = await this.categoryRepository.findOneBy({id})
+    if (!existCategory) throw new NotFoundException('دسته بندی یافت نشد.');
 
-    const existingCategoryWithSlug = await this.categoryRepository.findOneBy({
+    const updatedData = {
+      title: updateCategoryDto.title,
       slug: updateCategoryDto.slug,
-    });
-
-    if (existingCategoryWithSlug && existingCategoryWithSlug.id !== id) {
-      throw new BadRequestException('دسته بندی دیگری با این اسلاگ وجود دارد.');
-    }
-
-    const updateData = {
-      ...updateCategoryDto,
       parentCategory: updateCategoryDto.parentCategoryId
         ? await this.categoryRepository.findOneBy({
             id: updateCategoryDto.parentCategoryId,
@@ -109,8 +101,7 @@ export class CategoriesService {
         : null,
     };
 
-    await this.categoryRepository.update(id, updateData);
-    return this.categoryRepository.findOneBy({ id });
+    await this.categoryRepository.update(id, updatedData);
   }
 
   async isShowing(id: string) {

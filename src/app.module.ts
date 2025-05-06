@@ -15,7 +15,7 @@ import { CategoryEntity } from './entities/categories.entity';
       port: 5432,
       username: 'sina_dev',
       password: 'Dev8090100',
-      database: 'shop-db-pg12',
+      database: 'shop',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
